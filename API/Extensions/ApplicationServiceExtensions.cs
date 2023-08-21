@@ -21,6 +21,8 @@ public static class ApplicationServiceExtensions
         services.AddSwaggerGen();
 
         services.AddCors();
+        services.AddScoped<IAppUserRepository, UserRepository>();
+        services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 
         return services;

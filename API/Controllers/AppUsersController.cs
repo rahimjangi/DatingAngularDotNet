@@ -1,37 +1,52 @@
-﻿using API.Data;
-using API.Entities;
+﻿using API.DTOs;
+using API.Interfaces;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers;
 
 [Authorize]
 public class AppUsersController : BaseApiController
 {
-    private readonly AppDbContext _context;
+    private readonly IAppUserRepository _context;
+    private readonly IMapper _mapper;
 
-    public AppUsersController(AppDbContext context)
+    public AppUsersController(IAppUserRepository context, IMapper mapper)
     {
         _context = context;
+        _mapper = mapper;
     }
 
-    [AllowAnonymous]
+    //[AllowAnonymous]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<AppUser>>> GetUsers()
+    public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers()
     {
-        var result = await _context.AppUsers.ToListAsync();
-        return result;
+        var usersFromDb = await _context.GetAppUsersAsync();
+        var usersToReturn = _mapper.Map<IEnumerable<MemberDto>>(usersFromDb);
+        return Ok(usersToReturn);
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<AppUser>> GetUser(int id)
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<MemberDto>> GetUser(int id)
     {
-        var userFromDb = await _context.AppUsers
-            .FirstOrDefaultAsync(x => x.Id == id);
+        var userFromDb = await _context.GetAppUserByIdAsync(id);
+        var userToReturn = _mapper.Map<MemberDto>(userFromDb);
         if (userFromDb != null)
         {
-            return userFromDb;
+            return userToReturn;
+        }
+        return NotFound();
+    }
+
+    [HttpGet("{username}")]
+    public async Task<ActionResult<MemberDto>> GetUserByName(string username)
+    {
+        var userFromDb = await _context.GetAppUserByNameAsync(username);
+        var userToReturn = _mapper.Map<MemberDto>(userFromDb);
+        if (userFromDb != null)
+        {
+            return userToReturn;
         }
         return NotFound();
     }
